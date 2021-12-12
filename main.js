@@ -12,7 +12,7 @@ class Book {
 
 class UI {
     static displayBooks() {
-      
+
         const books = Store.getBooks();
         books.forEach((book) => UI.addBookToList(book));
     }
@@ -25,6 +25,7 @@ class UI {
       <td>${book.author}</td>
       <td>${book.isbn}</td>
       <td><a href="#" class="btn btn-danger btn-sm delete">X</td>
+      <td><a href="#" class="btn btn-success btn-sm complete"><i class="fas fa-check"></i></td>
       `;
 
         list.appendChild(row);
@@ -37,13 +38,25 @@ class UI {
         }
     }
 
+    static markBook(el){
+        if(el.classList.contains('complete')) {
+            el.parentElement.parentElement.classList.add('table-secondary');
+        }
+    }
+
     static showAlert(message, className) {
+        var elementExists = document.querySelector('.alert');
+        if (elementExists !== null) {
+            elementExists.remove()
+        }
+
         const div = document.createElement('div');
         div.className = `alert alert-${className}`;
         div.appendChild(document.createTextNode(message));
         const container = document.querySelector('.container');
         const form = document.querySelector('#book-form');
         container.insertBefore(div, form);
+
         // Vanish in 3 secs
         setTimeout(() => document.querySelector('.alert').remove(), 3000);
     }
@@ -108,26 +121,40 @@ document.querySelector('#book-form').addEventListener('submit', (e) => {
 
         // initiate book
         const book = new Book(title, author, isbn);
+        const books = Store.getBooks();
 
-        // Add book to list
+        for (var i = 0; i < books.length; i++) {
+            if (books[i].title === title && books[i].author === author && books[i].isbn === isbn) {
+                UI.showAlert('Book Already Exists', 'danger');  
+                UI.clearFields();
+                return false;
+            } 
+        }
+
         UI.addBookToList(book);
-
         // Add bookto store
         Store.addBook(book);
-
         // Show success msg
         UI.showAlert('Book Added', 'success');
 
         // Clear filds
         UI.clearFields();
+
     }
 });
 
-// Event: Remove a book
+// Event: Remove a book & Mark as complete
 document.querySelector('#book-list').addEventListener('click', (e) => {
+    
+    if (e.target.classList.contains('complete')) {
+    UI.markBook(e.target);
+    }
+    
+    if (e.target.classList.contains('delete')) {
     // Remove book from UI
     UI.deleteBook(e.target);
-
-    // Remove book from store
-    Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
+     // Remove book from store
+     Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
+    }
+   
 });
